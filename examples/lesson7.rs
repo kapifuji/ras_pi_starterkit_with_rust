@@ -89,8 +89,33 @@ fn EXTI9_5() {
             panic!("SWITCH が見つかりませんでした。");
         };
 
-        switch.clear_interrupt_pending_bit();
-
         led.toggle();
+
+        // 簡易チャタリング対策
+        // もっと真面目にやるなら、割り込みではなく一定msおきに複数回サンプリングして連続してON/OFF状態が継続で確定とする。
+        // そして、OFFからONのときのみ押下されたとして、LEDをトグルする。
+        // 他の方法もあるはず。また、回路側での対策もある。
+        wait_ms(5);
+
+        switch.clear_interrupt_pending_bit();
     })
+}
+
+// 指定した時間待ちます。（待ち時間の精度は悪いので注意）
+fn wait_ms(msec: u16) {
+    for _ in 0..msec {
+        // nopが180000回で1ms（本当はforではなく、可能な限り列挙した方が誤差少ない）
+        for _ in 0..18000 {
+            cortex_m::asm::nop();
+            cortex_m::asm::nop();
+            cortex_m::asm::nop();
+            cortex_m::asm::nop();
+            cortex_m::asm::nop();
+            cortex_m::asm::nop();
+            cortex_m::asm::nop();
+            cortex_m::asm::nop();
+            cortex_m::asm::nop();
+            cortex_m::asm::nop();
+        }
+    }
 }
